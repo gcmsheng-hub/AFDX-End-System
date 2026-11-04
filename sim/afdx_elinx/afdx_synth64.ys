@@ -1,0 +1,72 @@
+read_verilog -sv -lib D:/elinx/eLinx3.0/bin/shell/share/stratix/cells_sim.v
+read_verilog -sv -lib D:/elinx/eLinx3.0/bin/shell/share/stratix/common/m4k.v
+read_verilog -sv -lib D:/elinx/eLinx3.0/bin/shell/share/stratix/common/dsp.v
+read_verilog -sv -lib D:/elinx/eLinx3.0/bin/shell/share/stratix/common/pll.v
+read_verilog -sv -lib D:/elinx/eLinx3.0/bin/shell/share/stratix/common/io.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/AFDX_top.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/afdx_es_core.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/cfg_bus.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/host_arb.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/ram_init.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/stats.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/core/timebase.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/buf_mgr.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/crc32_d8.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/csum16.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/rr_arbiter.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/sdp_ram.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/sync_fifo.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/lib/tick_gen.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/mac/mac_port_if.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/mac/mac_rx.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/mac/mac_tx.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_integrity.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_parser.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_path.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_reassembly.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_redundancy.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/rx/rx_vl_lookup.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/tx/tx_frame_builder.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/tx/tx_regulator.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/tx/tx_scheduler.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/tx/tx_sn_gen.v
+read_verilog D:/Agent_Project/Zcode/AFDX_ES/rtl/tx/tx_vl_table.v
+hierarchy -check -top AFDX_top
+proc
+opt_pmux
+tribuf -logic
+opt_clean
+deminout
+synth -run coarse
+memory_bram -rules D:/elinx/eLinx3.0/bin/shell/share/stratix/common/brams.txt
+opt_merge
+opt_clean
+opt_pmux
+techmap -autoproc -map D:/elinx/eLinx3.0/bin/shell/share/stratix/common/brams_map.v
+memory_split
+opt -fast -mux_undef -undriven -fine -full
+memory_map
+opt -undriven -fine
+dffsr2dff
+dff2dffe
+opt -fine
+opt_clean
+techmap -map +/techmap.v
+dff2dffs
+opt -full
+clean -purge
+setundef -undriven -zero
+abc -fast -lut 4
+clean
+opt_rmdff
+techmap -map D:/elinx/eLinx3.0/bin/shell/share/stratix/cells_map.v
+iopadmap -bits
+techmap -autoproc -map D:/elinx/eLinx3.0/bin/shell/share/stratix/common/io_map.v
+clean -purge
+opt_merge
+clean
+wreduce
+opt_clean
+clean -purge
+write_verilog -noattr out/afdx_es_psynth64.v
+stat

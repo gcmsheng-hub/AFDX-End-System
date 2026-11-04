@@ -1,0 +1,44 @@
+# eLinx / EDA 生成产物
+*.bit
+*.bin
+*.rpt
+*.log
+*.wdb
+*.vstf
+__project__/
+db/
+incremental_db/
+
+# 仿真产物
+*.wlf
+*.vcd
+transcript
+work/
+modelsim.ini
+# 回归产物（gen_stim/仿真的输出目录，全部可由 scripts/regress.sh 重新生成，不入库）
+sim/tb_out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 系统与编辑器
+Thumbs.db
+.DS_Store
+*.bak
+
+# eLinx 工程产物（T4：工程文件与构建产物不入库，源文件保留在仓库）
+*.epr
+*.qpf
+*.qsf
+*.pr/
+*.runs/
+*.sim/
+*.srcs/
+db/
+incremental_db/
+hierarchy.xml
+log4cpp.property
+# 文献库解压内容（zip 原件已在 ref/team-ref/ 跟踪）
+ref/lit/

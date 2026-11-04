@@ -1,0 +1,88 @@
+# afdx_synth.ys — T8：AFDX 设计（RTL mac 路径，AFDX_MAC_IP 未定义）eLinx 综合脚本
+# 工具：eLinx 3.0 自带 eLinx_synthesis（yosys 内核）+ 外挂 yosys-abc（scoop，
+#       registry.json 登记）补 LUT 映射——eLinx 安装缺 yosys-abc.exe，abc -exe
+#       方式外挂，不改 eLinx 目录（doc/07 §8.1 坑 2）。
+# 产出：afdx_es_psynth.v（stratix_lcell/stratix_ram_block 网表）+ stat 资源报告
+# 注意：Tri_Mode_Ethernet_Mac 加密源对本 CLI 不可读（解析得空设计，RPT-T8 报备），
+#       含 IP 的全设计综合走 eLinx GUI（RUNBOOK §二）；本脚本综合 RTL mac 路径，
+#       证明 eLinx 工具链对本设计的综合闭环，与 K1（T3）同一工具口径。
+read_verilog -sv -lib +/stratix/cells_sim.v
+read_verilog -sv -lib +/stratix/common/m4k.v
+read_verilog -sv -lib +/stratix/common/dsp.v
+read_verilog -sv -lib +/stratix/common/pll.v
+read_verilog -sv -lib +/stratix/common/io.v
+read_verilog -nomem2reg +/stratix/primitive/dcfifo.v
+read_verilog +/stratix/primitive/lpm_clshift.v
+read_verilog -nomem2reg +/stratix/primitive/scfifo.v
+read_verilog ../../rtl/AFDX_top.v
+read_verilog ../../rtl/core/afdx_es_core.v
+read_verilog ../../rtl/core/cfg_bus.v
+read_verilog ../../rtl/core/host_arb.v
+read_verilog ../../rtl/core/ram_init.v
+read_verilog ../../rtl/core/stats.v
+read_verilog ../../rtl/core/timebase.v
+read_verilog ../../rtl/lib/buf_mgr.v
+read_verilog ../../rtl/lib/crc32_d8.v
+read_verilog ../../rtl/lib/csum16.v
+read_verilog ../../rtl/lib/rr_arbiter.v
+read_verilog ../../rtl/lib/sdp_ram.v
+read_verilog ../../rtl/lib/sync_fifo.v
+read_verilog ../../rtl/lib/tick_gen.v
+read_verilog ../../rtl/mac/mac_port_if.v
+read_verilog ../../rtl/mac/mac_rx.v
+read_verilog ../../rtl/mac/mac_tx.v
+read_verilog ../../rtl/rx/rx_integrity.v
+read_verilog ../../rtl/rx/rx_parser.v
+read_verilog ../../rtl/rx/rx_path.v
+read_verilog ../../rtl/rx/rx_reassembly.v
+read_verilog ../../rtl/rx/rx_redundancy.v
+read_verilog ../../rtl/rx/rx_vl_lookup.v
+read_verilog ../../rtl/tx/tx_frame_builder.v
+read_verilog ../../rtl/tx/tx_regulator.v
+read_verilog ../../rtl/tx/tx_scheduler.v
+read_verilog ../../rtl/tx/tx_sn_gen.v
+read_verilog ../../rtl/tx/tx_vl_table.v
+hierarchy -check -top AFDX_top
+proc
+opt_pmux
+tribuf -logic
+opt_clean
+deminout
+synth -run coarse
+memory_bram -rules +/stratix/common/brams.txt
+opt_merge
+opt_clean
+opt_pmux
+techmap -autoproc -map +/stratix/common/brams_map.v
+memory_split
+adjust
+tribuf -logic
+opt -fast -mux_undef -undriven -fine -full
+memory_map
+opt -undriven -fine
+dffsr2dff
+dff2dffe
+opt -fine
+opt_clean
+techmap -map +/techmap.v
+dff2dffs
+opt -full
+clean -purge
+setundef -undriven -zero
+abc -exe D:/Scoop/apps/yosys/current/yosys-abc.exe -fast -lut 4
+clean
+opt_rmdff
+techmap -map +/stratix/cells_map.v
+iopadmap -bits
+techmap -autoproc -map +/stratix/common/io_map.v
+dffinit -highlow -ff dffeas q power_up
+clean -purge
+opt_merge
+clean
+merge2lcell
+handle_init_reg
+wreduce
+opt_clean
+clean -purge
+write_verilog -noattr out/afdx_es_psynth.v
+stat
